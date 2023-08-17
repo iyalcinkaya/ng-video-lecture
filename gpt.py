@@ -1,18 +1,20 @@
 import torch
 import torch.nn as nn
+import matplotlib.pyplot as plt
+import numpy as np
 from torch.nn import functional as F
 
 # hyperparameters
-batch_size = 64 # how many independent sequences will we process in parallel?
-block_size = 256 # what is the maximum context length for predictions?
-max_iters = 5000
-eval_interval = 500
+batch_size = 4 # how many independent sequences will we process in parallel?
+block_size = 120 # what is the maximum context length for predictions?
+max_iters = 10000
+eval_interval = 50
 learning_rate = 3e-4
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
-eval_iters = 200
-n_embd = 384
+eval_iters = 100
+n_embd = 128
 n_head = 6
-n_layer = 6
+n_layer = 1
 dropout = 0.2
 # ------------
 
@@ -200,8 +202,14 @@ m = model.to(device)
 # print the number of parameters in the model
 print(sum(p.numel() for p in m.parameters())/1e6, 'M parameters')
 
+print(device)
+
 # create a PyTorch optimizer
 optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
+
+
+# List for training graph
+training_data = []
 
 for iter in range(max_iters):
 
@@ -209,10 +217,14 @@ for iter in range(max_iters):
     if iter % eval_interval == 0 or iter == max_iters - 1:
         losses = estimate_loss()
         print(f"step {iter}: train loss {losses['train']:.4f}, val loss {losses['val']:.4f}")
+        #append losses to training_data
+        training_data.append(losses)
+
+
 
     # sample a batch of data
     xb, yb = get_batch('train')
-
+    
     # evaluate the loss
     logits, loss = model(xb, yb)
     optimizer.zero_grad(set_to_none=True)
@@ -221,5 +233,24 @@ for iter in range(max_iters):
 
 # generate from the model
 context = torch.zeros((1, 1), dtype=torch.long, device=device)
-print(decode(m.generate(context, max_new_tokens=500)[0].tolist()))
+print(decode(m.generate(context, max_new_tokens=10000)[0].tolist()))
 #open('more.txt', 'w').write(decode(m.generate(context, max_new_tokens=10000)[0].tolist()))
+
+
+# plot the train and val in training_data list
+train_loss = []
+val_loss = []
+for i in range(len(training_data)):
+    train_loss.append(training_data[i]['train'])
+    val_loss.append(training_data[i]['val'])
+
+plt.plot(np.arange(0, len(training_data)), train_loss, label='train')
+plt.plot(np.arange(0, len(training_data)), val_loss, label='val')
+plt.legend()
+plt.xlabel('iterations')
+plt.ylabel('loss')
+plt.show()
+
+
+
+
