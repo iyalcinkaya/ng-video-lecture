@@ -6,15 +6,15 @@ from torch.nn import functional as F
 
 # hyperparameters
 batch_size = 4 # how many independent sequences will we process in parallel?
-block_size = 120 # what is the maximum context length for predictions?
-max_iters = 10000
+block_size = 400 # what is the maximum context length for predictions?
+max_iters = 15000
 eval_interval = 50
 learning_rate = 3e-4
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 eval_iters = 100
 n_embd = 128
 n_head = 6
-n_layer = 1
+n_layer = 8
 dropout = 0.2
 # ------------
 
@@ -220,8 +220,6 @@ for iter in range(max_iters):
         #append losses to training_data
         training_data.append(losses)
 
-
-
     # sample a batch of data
     xb, yb = get_batch('train')
     
@@ -235,7 +233,6 @@ for iter in range(max_iters):
 context = torch.zeros((1, 1), dtype=torch.long, device=device)
 print(decode(m.generate(context, max_new_tokens=10000)[0].tolist()))
 #open('more.txt', 'w').write(decode(m.generate(context, max_new_tokens=10000)[0].tolist()))
-
 
 # plot the train and val in training_data list
 train_loss = []
